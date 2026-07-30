@@ -1,63 +1,100 @@
 -- =========================================================
--- UTA HUB - Full Admin GUI Script
+-- Сервисы
 -- =========================================================
-
 local Players = game:GetService("Players")
 local UserInputService = game:GetService("UserInputService")
 local TweenService = game:GetService("TweenService")
 local RunService = game:GetService("RunService")
+local Workspace = game:GetService("Workspace")
 local TeleportService = game:GetService("TeleportService")
 
 local LocalPlayer = Players.LocalPlayer
-
--- Проверка и удаление старой версии GUI если она есть
-local oldGui = LocalPlayer:WaitForChild("PlayerGui"):FindFirstChild("AdminPanelGui")
-if oldGui then
-oldGui:Destroy()
-end
+local Camera = Workspace.CurrentCamera
 
 -- =========================================================
 -- Настройки Цветов и Дизайна
 -- =========================================================
 local THEME = {
-TitleColor = Color3.fromHex("#db2cd8"),  -- Цвет названия Uta Hub
-Primary = Color3.fromHex("#d033de"),     -- Неоново-фиолетовый акцент
-Background = Color3.fromRGB(25, 25, 25), -- Тёмный фоновый цвет
-Sidebar = Color3.fromRGB(18, 18, 18),    -- Цвет сайдбара
-ElementBg = Color3.fromRGB(40, 40, 40),  -- Цвет элементов
+Primary = Color3.fromHex("#d033de"),      -- Основной фиолетовый
+TitleColor = Color3.fromHex("#db2cd8"),   -- Цвет текста "Uta Hub"
+Background = Color3.fromRGB(25, 25, 25),
+Sidebar = Color3.fromRGB(15, 15, 15),
+ElementBg = Color3.fromRGB(40, 40, 40),
 Text = Color3.fromRGB(255, 255, 255),
-TextDark = Color3.fromRGB(160, 160, 160), -- Неактивный цвет текста
-CornerRadius = UDim.new(0, 12)
+TextDark = Color3.fromRGB(170, 170, 170),
+CornerRadius = UDim.new(0, 8)
 }
 
 -- =========================================================
--- 1. Создание главного ScreenGui и Окна
+-- 1. Создание базового GUI
 -- =========================================================
 local ScreenGui = Instance.new("ScreenGui")
-ScreenGui.Name = "AdminPanelGui"
+ScreenGui.Name = "UtaHubGui"
 ScreenGui.ResetOnSpawn = false
+ScreenGui.DisplayOrder = 999999999 -- Поверх всех интерфейсов, магазинов и инвентарей
 ScreenGui.Parent = LocalPlayer:WaitForChild("PlayerGui")
 
+-- =========================================================
+-- 2. Кнопка "UTA HUB" (Радужная, Перетаскиваемая)
+-- =========================================================
+local OpenBtn = Instance.new("TextButton")
+OpenBtn.Name = "OpenButton"
+OpenBtn.Size = UDim2.new(0, 120, 0, 40)
+OpenBtn.Position = UDim2.new(0.5, -60, 0, 20)
+OpenBtn.BackgroundColor3 = Color3.fromRGB(10, 10, 10)
+OpenBtn.Text = "UTA HUB"
+OpenBtn.Font = Enum.Font.GothamBold
+OpenBtn.TextSize = 18
+OpenBtn.Parent = ScreenGui
+
+local OpenUICorner = Instance.new("UICorner")
+OpenUICorner.CornerRadius = UDim.new(0, 8)
+OpenUICorner.Parent = OpenBtn
+
+local OpenUIStroke = Instance.new("UIStroke")
+OpenUIStroke.Thickness = 2
+OpenUIStroke.Parent = OpenBtn
+
+-- Радужная анимация для кнопки
+RunService.RenderStepped:Connect(function()
+local hue = tick() % 5 / 5
+local rainbowColor = Color3.fromHSV(hue, 1, 1)
+OpenBtn.TextColor3 = rainbowColor
+OpenUIStroke.Color = rainbowColor
+end)
+
+-- =========================================================
+-- 3. Главное Меню
+-- =========================================================
 local MainFrame = Instance.new("Frame")
 MainFrame.Name = "MainFrame"
-MainFrame.Size = UDim2.new(0, 460, 0, 320)
-MainFrame.Position = UDim2.new(0.5, -230, 0.5, -160)
+MainFrame.Size = UDim2.new(0, 440, 0, 300) -- Компактный размер
+MainFrame.Position = UDim2.new(0.5, -220, 0.5, -150)
 MainFrame.BackgroundColor3 = THEME.Background
 MainFrame.BorderSizePixel = 0
-MainFrame.Visible = false
-MainFrame.ClipsDescendants = true
+MainFrame.Visible = false -- Изначально скрыто
 MainFrame.Parent = ScreenGui
 
 local MainUICorner = Instance.new("UICorner")
 MainUICorner.CornerRadius = THEME.CornerRadius
 MainUICorner.Parent = MainFrame
 
--- =========================================================
--- 2. Сайдбар и Заголовок
--- =========================================================
+-- Заголовок Uta Hub
+local Title = Instance.new("TextLabel")
+Title.Size = UDim2.new(0, 120, 0, 40)
+Title.Position = UDim2.new(0, 0, 0, 0)
+Title.BackgroundTransparency = 1
+Title.Text = "Uta Hub"
+Title.TextColor3 = THEME.TitleColor
+Title.TextSize = 20
+Title.Font = Enum.Font.GothamBlack
+Title.Parent = MainFrame
+
+-- Левая панель (Sidebar)
 local Sidebar = Instance.new("Frame")
 Sidebar.Name = "Sidebar"
-Sidebar.Size = UDim2.new(0, 130, 1, 0)
+Sidebar.Size = UDim2.new(0, 120, 1, -40)
+Sidebar.Position = UDim2.new(0, 0, 0, 40)
 Sidebar.BackgroundColor3 = THEME.Sidebar
 Sidebar.BorderSizePixel = 0
 Sidebar.Parent = MainFrame
@@ -67,59 +104,36 @@ SidebarUICorner.CornerRadius = THEME.CornerRadius
 SidebarUICorner.Parent = Sidebar
 
 local SidebarPatch = Instance.new("Frame")
-SidebarPatch.Size = UDim2.new(0, 12, 1, 0)
-SidebarPatch.Position = UDim2.new(1, -12, 0, 0)
+SidebarPatch.Size = UDim2.new(0, 8, 1, 0)
+SidebarPatch.Position = UDim2.new(1, -8, 0, 0)
 SidebarPatch.BackgroundColor3 = THEME.Sidebar
 SidebarPatch.BorderSizePixel = 0
 SidebarPatch.Parent = Sidebar
 
-local TitleLabel = Instance.new("TextLabel")
-TitleLabel.Name = "TitleLabel"
-TitleLabel.Size = UDim2.new(1, 0, 0, 45)
-TitleLabel.BackgroundTransparency = 1
-TitleLabel.Text = "Uta Hub"
-TitleLabel.TextColor3 = THEME.TitleColor
-TitleLabel.TextSize = 20
-TitleLabel.Font = Enum.Font.GothamBold
-TitleLabel.Parent = Sidebar
+local SidebarListLayout = Instance.new("UIListLayout")
+SidebarListLayout.SortOrder = Enum.SortOrder.LayoutOrder
+SidebarListLayout.Parent = Sidebar
 
-local TabListContainer = Instance.new("ScrollingFrame")
-TabListContainer.Name = "TabListContainer"
-TabListContainer.Size = UDim2.new(1, -10, 1, -50)
-TabListContainer.Position = UDim2.new(0, 5, 0, 45)
-TabListContainer.BackgroundTransparency = 1
-TabListContainer.BorderSizePixel = 0
-TabListContainer.ScrollBarThickness = 2
-TabListContainer.ScrollBarImageColor3 = THEME.Primary
-TabListContainer.AutomaticCanvasSize = Enum.AutomaticSize.Y
-TabListContainer.CanvasSize = UDim2.new(0, 0, 0, 0)
-TabListContainer.Parent = Sidebar
-
-local TabListLayout = Instance.new("UIListLayout")
-TabListLayout.SortOrder = Enum.SortOrder.LayoutOrder
-TabListLayout.Padding = UDim.new(0, 4)
-TabListLayout.Parent = TabListContainer
-
+-- Контейнер для контента
 local ContentContainer = Instance.new("Frame")
 ContentContainer.Name = "ContentContainer"
-ContentContainer.Size = UDim2.new(1, -140, 1, -20)
-ContentContainer.Position = UDim2.new(0, 135, 0, 10)
+ContentContainer.Size = UDim2.new(1, -120, 1, -40)
+ContentContainer.Position = UDim2.new(0, 120, 0, 40)
 ContentContainer.BackgroundTransparency = 1
 ContentContainer.Parent = MainFrame
 
 -- =========================================================
--- 3. Drag-and-Drop Система (Для окна и кнопки)
+-- 4. Перетаскивание (Drag) для окон и кнопок
 -- =========================================================
-local function MakeDraggable(frame)
-local dragging = false
-local dragInput, dragStart, startPos
+local function MakeDraggable(guiElement)
+local dragging, dragInput, dragStart, startPos
 
-frame.InputBegan:Connect(function(input)
+guiElement.InputBegan:Connect(function(input)
 	if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
 		dragging = true
 		dragStart = input.Position
-		startPos = frame.Position
-
+		startPos = guiElement.Position
+		
 		input.Changed:Connect(function()
 			if input.UserInputState == Enum.UserInputState.End then
 				dragging = false
@@ -128,7 +142,7 @@ frame.InputBegan:Connect(function(input)
 	end
 end)
 
-frame.InputChanged:Connect(function(input)
+guiElement.InputChanged:Connect(function(input)
 	if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
 		dragInput = input
 	end
@@ -137,8 +151,7 @@ end)
 UserInputService.InputChanged:Connect(function(input)
 	if input == dragInput and dragging then
 		local delta = input.Position - dragStart
-		local targetPos = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
-		TweenService:Create(frame, TweenInfo.new(0.08, Enum.EasingStyle.Sine, Enum.EasingDirection.Out), {Position = targetPos}):Play()
+		guiElement.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
 	end
 end)
 
@@ -146,122 +159,69 @@ end)
 end
 
 MakeDraggable(MainFrame)
+MakeDraggable(OpenBtn)
 
--- =========================================================
--- 4. Радужная Кнопка "UTA HUB"
--- =========================================================
-local OpenButton = Instance.new("TextButton")
-OpenButton.Name = "OpenButton"
-OpenButton.Size = UDim2.new(0, 105, 0, 35)
-OpenButton.Position = UDim2.new(0, 20, 0.5, -17)
-OpenButton.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
-OpenButton.BorderSizePixel = 0
-OpenButton.Text = "UTA HUB"
-OpenButton.TextSize = 14
-OpenButton.Font = Enum.Font.GothamBold
-OpenButton.Parent = ScreenGui
-
-local OpenBtnCorner = Instance.new("UICorner")
-OpenBtnCorner.CornerRadius = UDim.new(0, 8)
-OpenBtnCorner.Parent = OpenButton
-
-local OpenBtnStroke = Instance.new("UIStroke")
-OpenBtnStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
-OpenBtnStroke.Thickness = 2
-OpenBtnStroke.Parent = OpenButton
-
-MakeDraggable(OpenButton)
-
--- Анимация перелива цветов
-local rainbowHue = 0
-RunService.RenderStepped:Connect(function(dt)
-rainbowHue = (rainbowHue + dt * 0.4) % 1
-local rainbowColor = Color3.fromHSV(rainbowHue, 0.8, 1)
-OpenButton.TextColor3 = rainbowColor
-OpenBtnStroke.Color = rainbowColor
-end)
-
-OpenButton.MouseButton1Click:Connect(function()
+-- Логика кнопки "UTA HUB"
+OpenBtn.MouseButton1Click:Connect(function()
 MainFrame.Visible = not MainFrame.Visible
 end)
 
 -- =========================================================
--- 5. Конструкторы Компонентов UI (Toggle, Slider, Button, Textbox)
+-- 5. UI Конструкторы (Вкладки, Кнопки, Слайдеры, Переключатели)
 -- =========================================================
-local TabButtons = {}
+local Tabs = {}
 local TabPages = {}
-local TabList = {"Main", "Combat", "ESP", "Autofarm", "Fling", "Fun", "Settings"}
 
-local function SwitchTab(tabName)
-for name, page in pairs(TabPages) do
-page.Visible = (name == tabName)
-end
-for name, btn in pairs(TabButtons) do
-local isActive = (name == tabName)
-TweenService:Create(btn, TweenInfo.new(0.15), {
-TextColor3 = isActive and THEME.Primary or THEME.TextDark,
-BackgroundTransparency = isActive and 0.85 or 1
-}):Play()
-end
-end
+local function CreateTab(name, isFirst)
+local TabBtn = Instance.new("TextButton")
+TabBtn.Size = UDim2.new(1, 0, 0, 35)
+TabBtn.BackgroundTransparency = 1
+TabBtn.Text = name
+TabBtn.TextColor3 = isFirst and THEME.Primary or THEME.TextDark
+TabBtn.TextSize = 14
+TabBtn.Font = Enum.Font.GothamBold
+TabBtn.Parent = Sidebar
 
-for index, tabName in ipairs(TabList) do
 local Page = Instance.new("ScrollingFrame")
-Page.Name = tabName .. "Page"
-Page.Size = UDim2.new(1, 0, 1, 0)
+Page.Size = UDim2.new(1, -20, 1, -20)
+Page.Position = UDim2.new(0, 10, 0, 10)
 Page.BackgroundTransparency = 1
 Page.BorderSizePixel = 0
-Page.ScrollBarThickness = 3
-Page.ScrollBarImageColor3 = THEME.Primary
-Page.AutomaticCanvasSize = Enum.AutomaticSize.Y
-Page.CanvasSize = UDim2.new(0, 0, 0, 0)
-Page.Visible = false
+Page.ScrollBarThickness = 2
+Page.Visible = isFirst
 Page.Parent = ContentContainer
 
 local PageLayout = Instance.new("UIListLayout")
-PageLayout.SortOrder = Enum.SortOrder.LayoutOrder
 PageLayout.Padding = UDim.new(0, 8)
 PageLayout.Parent = Page
 
-TabPages[tabName] = Page
+Tabs[name] = TabBtn
+TabPages[name] = Page
 
-local TabButton = Instance.new("TextButton")
-TabButton.Name = tabName .. "Button"
-TabButton.Size = UDim2.new(1, 0, 0, 30)
-TabButton.BackgroundColor3 = THEME.Primary
-TabButton.BackgroundTransparency = 1
-TabButton.Text = tabName
-TabButton.TextColor3 = THEME.TextDark
-TabButton.TextSize = 13
-TabButton.Font = Enum.Font.GothamMedium
-TabButton.LayoutOrder = index
-TabButton.Parent = TabListContainer
+TabBtn.MouseButton1Click:Connect(function()
+	for tName, btn in pairs(Tabs) do
+		btn.TextColor3 = (tName == name) and THEME.Primary or THEME.TextDark
+	end
+	for pName, page in pairs(TabPages) do
+		page.Visible = (pName == name)
+	end
+end)
 
-local TabBtnCorner = Instance.new("UICorner")
-TabBtnCorner.CornerRadius = UDim.new(0, 6)
-TabBtnCorner.Parent = TabButton
-
-TabButton.MouseButton1Click:Connect(function() SwitchTab(tabName) end)
-TabButtons[tabName] = TabButton
+return Page
 
 
 end
 
-SwitchTab("Main")
-
--- Функция создания Переключателя (Toggle)
-local function CreateToggle(parent, text, default, callback)
+local function CreateToggle(parent, text, callback)
 local ToggleContainer = Instance.new("Frame")
-ToggleContainer.Size = UDim2.new(1, -6, 0, 36)
+ToggleContainer.Size = UDim2.new(1, 0, 0, 35)
 ToggleContainer.BackgroundColor3 = THEME.ElementBg
 ToggleContainer.Parent = parent
 
-local Corner = Instance.new("UICorner")
-Corner.CornerRadius = UDim.new(0, 8)
-Corner.Parent = ToggleContainer
+Instance.new("UICorner", ToggleContainer).CornerRadius = UDim.new(0, 6)
 
 local Label = Instance.new("TextLabel")
-Label.Size = UDim2.new(1, -55, 1, 0)
+Label.Size = UDim2.new(1, -60, 1, 0)
 Label.Position = UDim2.new(0, 10, 0, 0)
 Label.BackgroundTransparency = 1
 Label.Text = text
@@ -271,115 +231,90 @@ Label.Font = Enum.Font.Gotham
 Label.TextXAlignment = Enum.TextXAlignment.Left
 Label.Parent = ToggleContainer
 
-local ToggleBg = Instance.new("Frame")
+local ToggleBg = Instance.new("TextButton")
 ToggleBg.Size = UDim2.new(0, 40, 0, 20)
-ToggleBg.Position = UDim2.new(1, -48, 0.5, -10)
-ToggleBg.BackgroundColor3 = default and THEME.Primary or Color3.fromRGB(60, 60, 60)
+ToggleBg.Position = UDim2.new(1, -50, 0.5, -10)
+ToggleBg.BackgroundColor3 = THEME.Sidebar
+ToggleBg.Text = ""
 ToggleBg.Parent = ToggleContainer
 
-local BgCorner = Instance.new("UICorner")
-BgCorner.CornerRadius = UDim.new(1, 0)
-BgCorner.Parent = ToggleBg
+Instance.new("UICorner", ToggleBg).CornerRadius = UDim.new(1, 0)
 
 local Circle = Instance.new("Frame")
-Circle.Size = UDim2.new(0, 14, 0, 14)
-Circle.Position = default and UDim2.new(1, -17, 0.5, -7) or UDim2.new(0, 3, 0.5, -7)
-Circle.BackgroundColor3 = THEME.Text
+Circle.Size = UDim2.new(0, 16, 0, 16)
+Circle.Position = UDim2.new(0, 2, 0.5, -8)
+Circle.BackgroundColor3 = THEME.TextDark
 Circle.Parent = ToggleBg
 
-local CircleCorner = Instance.new("UICorner")
-CircleCorner.CornerRadius = UDim.new(1, 0)
-CircleCorner.Parent = Circle
+Instance.new("UICorner", Circle).CornerRadius = UDim.new(1, 0)
 
-local isToggled = default or false
-
-local function ToggleState()
+local isToggled = false
+ToggleBg.MouseButton1Click:Connect(function()
 	isToggled = not isToggled
-	local bgGoal = {BackgroundColor3 = isToggled and THEME.Primary or Color3.fromRGB(60, 60, 60)}
-	local circleGoal = {Position = isToggled and UDim2.new(1, -17, 0.5, -7) or UDim2.new(0, 3, 0.5, -7)}
+	local goalBg = {BackgroundColor3 = isToggled and THEME.Primary or THEME.Sidebar}
+	local goalCirclePos = {Position = isToggled and UDim2.new(1, -18, 0.5, -8) or UDim2.new(0, 2, 0.5, -8)}
+	local goalCircleCol = {BackgroundColor3 = isToggled and THEME.Text or THEME.TextDark}
 	
-	TweenService:Create(ToggleBg, TweenInfo.new(0.15), bgGoal):Play()
-	TweenService:Create(Circle, TweenInfo.new(0.15), circleGoal):Play()
+	TweenService:Create(ToggleBg, TweenInfo.new(0.2), goalBg):Play()
+	TweenService:Create(Circle, TweenInfo.new(0.2), goalCirclePos):Play()
+	TweenService:Create(Circle, TweenInfo.new(0.2), goalCircleCol):Play()
 	
 	if callback then callback(isToggled) end
-end
-
-ToggleBg.InputBegan:Connect(function(input)
-	if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-		ToggleState()
-	end
 end)
 
-return ToggleContainer
-
 
 end
 
--- Функция создания Слайдера (Slider)
 local function CreateSlider(parent, text, min, max, default, callback)
-local SliderFrame = Instance.new("Frame")
-SliderFrame.Size = UDim2.new(1, -6, 0, 45)
-SliderFrame.BackgroundColor3 = THEME.ElementBg
-SliderFrame.Parent = parent
+local SliderContainer = Instance.new("Frame")
+SliderContainer.Size = UDim2.new(1, 0, 0, 50)
+SliderContainer.BackgroundColor3 = THEME.ElementBg
+SliderContainer.Parent = parent
 
-local Corner = Instance.new("UICorner")
-Corner.CornerRadius = UDim.new(0, 8)
-Corner.Parent = SliderFrame
+Instance.new("UICorner", SliderContainer).CornerRadius = UDim.new(0, 6)
 
 local Label = Instance.new("TextLabel")
-Label.Size = UDim2.new(1, -60, 0, 20)
-Label.Position = UDim2.new(0, 10, 0, 4)
+Label.Size = UDim2.new(1, -20, 0, 20)
+Label.Position = UDim2.new(0, 10, 0, 5)
 Label.BackgroundTransparency = 1
-Label.Text = text
+Label.Text = text .. ": " .. tostring(default)
 Label.TextColor3 = THEME.Text
 Label.TextSize = 13
 Label.Font = Enum.Font.Gotham
 Label.TextXAlignment = Enum.TextXAlignment.Left
-Label.Parent = SliderFrame
+Label.Parent = SliderContainer
 
-local ValueLabel = Instance.new("TextLabel")
-ValueLabel.Size = UDim2.new(0, 50, 0, 20)
-ValueLabel.Position = UDim2.new(1, -55, 0, 4)
-ValueLabel.BackgroundTransparency = 1
-ValueLabel.Text = tostring(default)
-ValueLabel.TextColor3 = THEME.Primary
-ValueLabel.TextSize = 13
-ValueLabel.Font = Enum.Font.GothamBold
-ValueLabel.TextXAlignment = Enum.TextXAlignment.Right
-ValueLabel.Parent = SliderFrame
+local SliderBg = Instance.new("TextButton")
+SliderBg.Size = UDim2.new(1, -20, 0, 6)
+SliderBg.Position = UDim2.new(0, 10, 0, 35)
+SliderBg.BackgroundColor3 = THEME.Sidebar
+SliderBg.Text = ""
+SliderBg.AutoButtonColor = false
+SliderBg.Parent = SliderContainer
 
-local SliderTrack = Instance.new("Frame")
-SliderTrack.Size = UDim2.new(1, -20, 0, 6)
-SliderTrack.Position = UDim2.new(0, 10, 1, -12)
-SliderTrack.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
-SliderTrack.Parent = SliderFrame
+Instance.new("UICorner", SliderBg).CornerRadius = UDim.new(1, 0)
 
-local TrackCorner = Instance.new("UICorner")
-TrackCorner.CornerRadius = UDim.new(1, 0)
-TrackCorner.Parent = SliderTrack
+local Fill = Instance.new("Frame")
+Fill.Size = UDim2.new((default - min) / (max - min), 0, 1, 0)
+Fill.BackgroundColor3 = THEME.Primary
+Fill.BorderSizePixel = 0
+Fill.Parent = SliderBg
 
-local SliderFill = Instance.new("Frame")
-SliderFill.Size = UDim2.new((default - min)/(max - min), 0, 1, 0)
-SliderFill.BackgroundColor3 = THEME.Primary
-SliderFill.Parent = SliderTrack
-
-local FillCorner = Instance.new("UICorner")
-FillCorner.CornerRadius = UDim.new(1, 0)
-FillCorner.Parent = SliderFill
+Instance.new("UICorner", Fill).CornerRadius = UDim.new(1, 0)
 
 local dragging = false
-local function UpdateSlider(input)
-	local posX = math.clamp((input.Position.X - SliderTrack.AbsolutePosition.X) / SliderTrack.AbsoluteSize.X, 0, 1)
-	local value = math.floor(min + (max - min) * posX)
-	SliderFill.Size = UDim2.new(posX, 0, 1, 0)
-	ValueLabel.Text = tostring(value)
-	if callback then callback(value) end
+local function update(input)
+	local x = math.clamp((input.Position.X - SliderBg.AbsolutePosition.X) / SliderBg.AbsoluteSize.X, 0, 1)
+	Fill.Size = UDim2.new(x, 0, 1, 0)
+	local val = math.floor(min + (max - min) * x)
+	Label.Text = text .. ": " .. tostring(val)
+	if callback then callback(val) end
 end
 
-SliderTrack.InputBegan:Connect(function(input)
+SliderBg.InputBegan:Connect(function(input)
 	if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
 		dragging = true
-		UpdateSlider(input)
+		update(input)
 	end
 end)
 
@@ -391,171 +326,60 @@ end)
 
 UserInputService.InputChanged:Connect(function(input)
 	if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
-		UpdateSlider(input)
+		update(input)
 	end
 end)
 
 
 end
 
--- Функция создания Кнопки (Button)
 local function CreateButton(parent, text, callback)
 local Btn = Instance.new("TextButton")
-Btn.Size = UDim2.new(1, -6, 0, 32)
+Btn.Size = UDim2.new(1, 0, 0, 35)
 Btn.BackgroundColor3 = THEME.ElementBg
 Btn.Text = text
 Btn.TextColor3 = THEME.Text
+Btn.Font = Enum.Font.Gotham
 Btn.TextSize = 13
-Btn.Font = Enum.Font.GothamMedium
 Btn.Parent = parent
 
-local Corner = Instance.new("UICorner")
-Corner.CornerRadius = UDim.new(0, 8)
-Corner.Parent = Btn
+Instance.new("UICorner", Btn).CornerRadius = UDim.new(0, 6)
 
 Btn.MouseButton1Click:Connect(function()
-	TweenService:Create(Btn, TweenInfo.new(0.08), {BackgroundColor3 = THEME.Primary}):Play()
-	task.delay(0.1, function()
-		TweenService:Create(Btn, TweenInfo.new(0.15), {BackgroundColor3 = THEME.ElementBg}):Play()
-	end)
 	if callback then callback() end
 end)
 
 
 end
 
--- Функция создания Текстового поля (TextBox)
-local function CreateTextBox(parent, placeholder, callback)
-local BoxContainer = Instance.new("Frame")
-BoxContainer.Size = UDim2.new(1, -6, 0, 34)
-BoxContainer.BackgroundColor3 = THEME.ElementBg
-BoxContainer.Parent = parent
-
-local Corner = Instance.new("UICorner")
-Corner.CornerRadius = UDim.new(0, 8)
-Corner.Parent = BoxContainer
-
-local Box = Instance.new("TextBox")
-Box.Size = UDim2.new(1, -16, 1, 0)
-Box.Position = UDim2.new(0, 8, 0, 0)
-Box.BackgroundTransparency = 1
-Box.PlaceholderText = placeholder
-Box.Text = ""
-Box.TextColor3 = THEME.Text
-Box.PlaceholderColor3 = THEME.TextDark
-Box.TextSize = 12
-Box.Font = Enum.Font.Gotham
-Box.TextXAlignment = Enum.TextXAlignment.Left
-Box.Parent = BoxContainer
-
-Box.FocusLost:Connect(function(enterPressed)
-	if callback then callback(Box.Text, enterPressed) end
-end)
-
-
-end
-
 -- =========================================================
--- 6. Реализация Логики Вкладок
+-- 6. Наполнение Вкладок и Логика
 -- =========================================================
+local mainPage = CreateTab("Main", true)
+local combatPage = CreateTab("Combat", false)
+local espPage = CreateTab("ESP", false)
+local autofarmPage = CreateTab("Autofarm", false)
+local flingPage = CreateTab("Fling", false)
+local funPage = CreateTab("Fun", false)
+local settingsPage = CreateTab("Settings", false)
 
--- Вкладка MAIN (Модификации Персонажа)
+-- Вкладка: MAIN
 
-local mainPage = TabPages["Main"]
-
--- A. Headless Toggle
-CreateToggle(mainPage, "Hide Head (Headless)", false, function(toggled)
-local char = LocalPlayer.Character
-if not char then return end
-local head = char:FindFirstChild("Head")
-if head then
-head.Transparency = toggled and 1 or 0
-for _, item in pairs(head:GetChildren()) do
-if item:IsA("Decal") or item:IsA("Texture") then
-item.Transparency = toggled and 1 or 0
-end
-end
-end
-end)
-
--- B. Korblox / Hide Right Leg
-CreateToggle(mainPage, "Hide Right Leg (Korblox)", false, function(toggled)
-local char = LocalPlayer.Character
-if not char then return end
-
-local legParts = {"Right Leg", "RightLowerLeg", "RightUpperLeg", "RightFoot"}
-for _, partName in ipairs(legParts) do
-	local part = char:FindFirstChild(partName)
-	if part then
-		part.Transparency = toggled and 1 or 0
-	end
-end
-
-for _, item in pairs(char:GetChildren()) do
-	if item:IsA("Accessory") then
-		local handle = item:FindFirstChild("Handle")
-		if handle then
-			for _, att in pairs(handle:GetChildren()) do
-				if att:IsA("Attachment") and string.find(att.Name, "Right") and (string.find(att.Name, "Leg") or string.find(att.Name, "Foot")) then
-					handle.Transparency = toggled and 1 or 0
-				end
-			end
-		end
-	end
-end
-
-
-end)
-
--- C. Animation Pack Switcher
-local customAnimIDs = {walk = "", run = "", jump = "", fall = ""}
-
-CreateTextBox(mainPage, "Walk Animation ID...", function(text) customAnimIDs.walk = text end)
-CreateTextBox(mainPage, "Run Animation ID...", function(text) customAnimIDs.run = text end)
-CreateTextBox(mainPage, "Jump Animation ID...", function(text) customAnimIDs.jump = text end)
-CreateTextBox(mainPage, "Fall Animation ID...", function(text) customAnimIDs.fall = text end)
-
-CreateButton(mainPage, "Apply Custom Animations", function()
-local char = LocalPlayer.Character
-if not char then return end
-local animate = char:FindFirstChild("Animate")
-if animate then
-if customAnimIDs.walk ~= "" and animate:FindFirstChild("walk") then
-animate.walk:FindFirstChildOfClass("Animation").AnimationId = "rbxassetid://" .. customAnimIDs.walk
-end
-if customAnimIDs.run ~= "" and animate:FindFirstChild("run") then
-animate.run:FindFirstChildOfClass("Animation").AnimationId = "rbxassetid://" .. customAnimIDs.run
-end
-if customAnimIDs.jump ~= "" and animate:FindFirstChild("jump") then
-animate.jump:FindFirstChildOfClass("Animation").AnimationId = "rbxassetid://" .. customAnimIDs.jump
-end
-if customAnimIDs.fall ~= "" and animate:FindFirstChild("fall") then
-animate.fall:FindFirstChildOfClass("Animation").AnimationId = "rbxassetid://" .. customAnimIDs.fall
-end
-end
-end)
-
--- Вкладка COMBAT
-
-local combatPage = TabPages["Combat"]
-
--- WalkSpeed Slider
-CreateSlider(combatPage, "WalkSpeed", 16, 250, 16, function(value)
+CreateSlider(mainPage, "WalkSpeed", 16, 250, 16, function(value)
 if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
 LocalPlayer.Character.Humanoid.WalkSpeed = value
 end
 end)
 
--- JumpPower Slider
-CreateSlider(combatPage, "JumpPower", 50, 300, 50, function(value)
+CreateSlider(mainPage, "JumpPower", 50, 300, 50, function(value)
 if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
+LocalPlayer.Character.Humanoid.UseJumpPower = true
 LocalPlayer.Character.Humanoid.JumpPower = value
 end
 end)
 
--- Noclip Toggle
 local noclipConn
-CreateToggle(combatPage, "Noclip (Walk Through Walls)", false, function(toggled)
+CreateToggle(mainPage, "Noclip", false, function(toggled)
 if toggled then
 noclipConn = RunService.Stepped:Connect(function()
 if LocalPlayer.Character then
@@ -571,9 +395,8 @@ if noclipConn then noclipConn:Disconnect() end
 end
 end)
 
--- Infinite Jump
 local infJumpConn
-CreateToggle(combatPage, "Infinite Jump", false, function(toggled)
+CreateToggle(mainPage, "Infinite Jump", false, function(toggled)
 if toggled then
 infJumpConn = UserInputService.JumpRequest:Connect(function()
 if LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid") then
@@ -585,165 +408,206 @@ if infJumpConn then infJumpConn:Disconnect() end
 end
 end)
 
--- Вкладка ESP
-
-local espPage = TabPages["ESP"]
-local espHighlights = {}
-local espConnection
-
-CreateToggle(espPage, "Player ESP (Highlight)", false, function(toggled)
+local spinConn
+local spinSpeed = 20
+CreateToggle(mainPage, "Spin", false, function(toggled)
 if toggled then
-local function addESP(player)
-if player ~= LocalPlayer then
-local function applyHL(char)
-if not char then return end
-local hl = Instance.new("Highlight")
-hl.Name = "UtaESP"
-hl.FillColor = THEME.Primary
-hl.OutlineColor = Color3.fromRGB(255, 255, 255)
-hl.FillTransparency = 0.5
-hl.Parent = char
-espHighlights[player] = hl
+spinConn = RunService.RenderStepped:Connect(function()
+if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
+LocalPlayer.Character.HumanoidRootPart.CFrame = LocalPlayer.Character.HumanoidRootPart.CFrame * CFrame.Angles(0, math.rad(spinSpeed), 0)
 end
-if player.Character then applyHL(player.Character) end
-player.CharacterAdded:Connect(applyHL)
-end
-end
-
-	for _, p in pairs(Players:GetPlayers()) do addESP(p) end
-	espConnection = Players.PlayerAdded:Connect(addESP)
+end)
 else
-	if espConnection then espConnection:Disconnect() end
-	for _, hl in pairs(espHighlights) do
-		if hl then hl:Destroy() end
-	end
-	espHighlights = {}
-	for _, p in pairs(Players:GetPlayers()) do
-		if p.Character and p.Character:FindFirstChild("UtaESP") then
-			p.Character.UtaESP:Destroy()
-		end
-	end
-end
-
-
-end)
-
--- Вкладка AUTOFARM
-
-local autofarmPage = TabPages["Autofarm"]
-
-local autoClicking = false
-CreateToggle(autofarmPage, "Auto Clicker", false, function(toggled)
-autoClicking = toggled
-task.spawn(function()
-while autoClicking do
-local tool = LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Tool")
-if tool then tool:Activate() end
-task.wait(0.1)
+if spinConn then spinConn:Disconnect() end
 end
 end)
+
+local flying = false
+local flySpeed = 50
+local flyKeys = {W = false, A = false, S = false, D = false}
+local bg, bv
+
+local function StartFly()
+local char = LocalPlayer.Character
+if not char or not char:FindFirstChild("HumanoidRootPart") then return end
+local hrp = char.HumanoidRootPart
+
+bg = Instance.new("BodyGyro", hrp)
+bg.P = 9e4
+bg.maxTorque = Vector3.new(9e9, 9e9, 9e9)
+bg.cframe = hrp.CFrame
+
+bv = Instance.new("BodyVelocity", hrp)
+bv.velocity = Vector3.new(0,0.1,0)
+bv.maxForce = Vector3.new(9e9, 9e9, 9e9)
+
+flying = true
+
+char:FindFirstChildOfClass("Humanoid").PlatformStand = true
+
+RunService:BindToRenderStep("FlyLoop", 1, function()
+	if not flying or not char or not char:FindFirstChild("HumanoidRootPart") then return end
+	local camCF = Camera.CFrame
+	local moveDir = Vector3.new(0,0,0)
+	
+	if flyKeys.W then moveDir = moveDir + camCF.LookVector end
+	if flyKeys.S then moveDir = moveDir - camCF.LookVector end
+	if flyKeys.D then moveDir = moveDir + camCF.RightVector end
+	if flyKeys.A then moveDir = moveDir - camCF.RightVector end
+	
+	bg.cframe = camCF
+	if moveDir.Magnitude > 0 then
+		bv.velocity = moveDir.Unit * flySpeed
+	else
+		bv.velocity = Vector3.new(0,0,0)
+	end
+end)
+
+
+end
+
+local function StopFly()
+flying = false
+RunService:UnbindFromRenderStep("FlyLoop")
+if bg then bg:Destroy() end
+if bv then bv:Destroy() end
+if LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid") then
+LocalPlayer.Character:FindFirstChildOfClass("Humanoid").PlatformStand = false
+end
+end
+
+CreateToggle(mainPage, "Fly", false, function(toggled)
+if toggled then
+StartFly()
+else
+StopFly()
+end
+end)
+
+UserInputService.InputBegan:Connect(function(input, gameProcessed)
+if gameProcessed then return end
+if input.KeyCode == Enum.KeyCode.W then flyKeys.W = true
+elseif input.KeyCode == Enum.KeyCode.S then flyKeys.S = true
+elseif input.KeyCode == Enum.KeyCode.A then flyKeys.A = true
+elseif input.KeyCode == Enum.KeyCode.D then flyKeys.D = true end
+end)
+
+UserInputService.InputEnded:Connect(function(input, gameProcessed)
+if gameProcessed then return end
+if input.KeyCode == Enum.KeyCode.W then flyKeys.W = false
+elseif input.KeyCode == Enum.KeyCode.S then flyKeys.S = false
+elseif input.KeyCode == Enum.KeyCode.A then flyKeys.A = false
+elseif input.KeyCode == Enum.KeyCode.D then flyKeys.D = false end
+end)
+
+-- Вкладка: COMBAT
+
+local combatNote = Instance.new("TextLabel", combatPage)
+combatNote.Size = UDim2.new(1, 0, 0, 30)
+combatNote.BackgroundTransparency = 1
+combatNote.Text = "Функции перемещены в Main."
+combatNote.TextColor3 = THEME.TextDark
+combatNote.Font = Enum.Font.Gotham
+
+-- Вкладка: ESP
+
+local espEnabled = false
+CreateToggle(espPage, "Player ESP", false, function(toggled)
+espEnabled = toggled
+if not toggled then
+for _, v in pairs(Workspace:GetDescendants()) do
+if v:IsA("Highlight") and v.Name == "UtaESP" then
+v:Destroy()
+end
+end
+end
+end)
+
+RunService.RenderStepped:Connect(function()
+if espEnabled then
+for _, player in pairs(Players:GetPlayers()) do
+if player ~= LocalPlayer and player.Character then
+if not player.Character:FindFirstChild("UtaESP") then
+local highlight = Instance.new("Highlight")
+highlight.Name = "UtaESP"
+highlight.FillColor = Color3.new(1, 0, 0)
+highlight.OutlineColor = Color3.new(1, 1, 1)
+highlight.FillTransparency = 0.5
+highlight.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
+highlight.Parent = player.Character
+end
+end
+end
+end
+end)
+
+-- Вкладка: AUTOFARM
+
+local autoClickConn
+CreateToggle(autofarmPage, "Auto Click", false, function(toggled)
+if toggled then
+autoClickConn = RunService.RenderStepped:Connect(function()
+mouse1click() -- Внимание: mouse1click работает только в мощных экзекьюторах
+end)
+else
+if autoClickConn then autoClickConn:Disconnect() end
+end
 end)
 
 CreateButton(autofarmPage, "Teleport to Random Player", function()
-local otherPlayers = {}
-for _, p in pairs(Players:GetPlayers()) do
-if p ~= LocalPlayer and p.Character and p.Character:FindFirstChild("HumanoidRootPart") then
-table.insert(otherPlayers, p)
-end
-end
-if #otherPlayers > 0 then
-local target = otherPlayers[math.random(1, #otherPlayers)]
-if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
-LocalPlayer.Character.HumanoidRootPart.CFrame = target.Character.HumanoidRootPart.CFrame
-end
-end
-end)
+local allPlayers = Players:GetPlayers()
+if #allPlayers > 1 then
+local randomPlayer
+repeat
+randomPlayer = allPlayers[math.random(1, #allPlayers)]
+until randomPlayer ~= LocalPlayer
 
--- Вкладка FLING
-
-local flingPage = TabPages["Fling"]
-local flingTargetName = ""
-
-CreateTextBox(flingPage, "Enter Target Username...", function(text)
-flingTargetName = text
-end)
-
-CreateButton(flingPage, "Fling Target Player", function()
-if flingTargetName == "" then return end
-local targetPlayer
-for _, p in pairs(Players:GetPlayers()) do
-if string.sub(string.lower(p.Name), 1, #flingTargetName) == string.lower(flingTargetName) or string.sub(string.lower(p.DisplayName), 1, #flingTargetName) == string.lower(flingTargetName) then
-targetPlayer = p
-break
-end
-end
-
-if targetPlayer and targetPlayer.Character and targetPlayer.Character:FindFirstChild("HumanoidRootPart") and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
-	local root = LocalPlayer.Character.HumanoidRootPart
-	local targetRoot = targetPlayer.Character.HumanoidRootPart
-	
-	local bgv = Instance.new("BodyAngularVelocity")
-	bgv.MaxTorque = Vector3.new(math.huge, math.huge, math.huge)
-	bgv.AngularVelocity = Vector3.new(0, 99999, 0)
-	bgv.Parent = root
-	
-	for i = 1, 40 do
-		root.CFrame = targetRoot.CFrame
-		task.wait(0.02)
+	if randomPlayer.Character and randomPlayer.Character:FindFirstChild("HumanoidRootPart") and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
+		LocalPlayer.Character.HumanoidRootPart.CFrame = randomPlayer.Character.HumanoidRootPart.CFrame * CFrame.new(0, 0, 3)
 	end
-	bgv:Destroy()
 end
 
 
 end)
 
--- Вкладка FUN
+-- Вкладка: FLING
 
-local funPage = TabPages["Fun"]
-local spinBGV
+local flingNote = Instance.new("TextLabel", flingPage)
+flingNote.Size = UDim2.new(1, 0, 0, 30)
+flingNote.BackgroundTransparency = 1
+flingNote.Text = "Функции Fling в разработке."
+flingNote.TextColor3 = THEME.TextDark
+flingNote.Font = Enum.Font.Gotham
 
-CreateToggle(funPage, "SpinBot", false, function(toggled)
-local char = LocalPlayer.Character
-if not char or not char:FindFirstChild("HumanoidRootPart") then return end
-local root = char.HumanoidRootPart
+-- Вкладка: FUN
 
-if toggled then
-	spinBGV = Instance.new("BodyAngularVelocity")
-	spinBGV.Name = "UtaSpinBot"
-	spinBGV.MaxTorque = Vector3.new(0, math.huge, 0)
-	spinBGV.AngularVelocity = Vector3.new(0, 50, 0)
-	spinBGV.Parent = root
-else
-	if spinBGV then spinBGV:Destroy() end
-	if root:FindFirstChild("UtaSpinBot") then root.UtaSpinBot:Destroy() end
-end
-
-
+CreateButton(funPage, "Give BTools", function()
+local tool1 = Instance.new("HopperBin", LocalPlayer.Backpack)
+tool1.BinType = Enum.BinType.Clone
+local tool2 = Instance.new("HopperBin", LocalPlayer.Backpack)
+tool2.BinType = Enum.BinType.Hammer
+local tool3 = Instance.new("HopperBin", LocalPlayer.Backpack)
+tool3.BinType = Enum.BinType.Grab
 end)
 
 CreateToggle(funPage, "Low Gravity", false, function(toggled)
-workspace.Gravity = toggled and 35 or 196.2
-end)
-
-CreateButton(funPage, "Give Building Tools (BTools)", function()
-local backpack = LocalPlayer:FindFirstChildOfClass("Backpack")
-if backpack then
-for i = 1, 4 do
-local tool = Instance.new("HopperBin")
-tool.BinType = i
-tool.Parent = backpack
-end
+if toggled then
+Workspace.Gravity = 50
+else
+Workspace.Gravity = 196.2
 end
 end)
 
--- Вкладка SETTINGS
+-- Вкладка: SETTINGS
 
-local settingsPage = TabPages["Settings"]
-
-CreateButton(settingsPage, "Rejoin Game", function()
-TeleportService:Teleport(game.PlaceId, LocalPlayer)
+CreateButton(settingsPage, "Rejoin Server", function()
+TeleportService:TeleportToPlaceInstance(game.PlaceId, game.JobId, LocalPlayer)
 end)
 
-CreateButton(settingsPage, "Unload UI (Destroy)", function()
-ScreenGui:Destroy()
+CreateButton(settingsPage, "Unload UI", function()
+if ScreenGui then ScreenGui:Destroy() end
+if noclipConn then noclipConn:Disconnect() end
+if infJumpConn then infJumpConn:Disconnect() end
+if spinConn then spinConn:Disconnect() end
+StopFly()
 end)
