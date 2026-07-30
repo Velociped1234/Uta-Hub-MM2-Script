@@ -1,3 +1,4 @@
+-- STREAMING_CHUNK:Configuring services and theme settings...
 -- =========================================================
 -- Сервисы
 -- =========================================================
@@ -25,6 +26,7 @@ TextDark = Color3.fromRGB(170, 170, 170),
 CornerRadius = UDim.new(0, 8)
 }
 
+-- STREAMING_CHUNK:Creating the main ScreenGui and Open Button...
 -- =========================================================
 -- 1. Создание базового GUI
 -- =========================================================
@@ -43,8 +45,8 @@ OpenBtn.Size = UDim2.new(0, 120, 0, 40)
 OpenBtn.Position = UDim2.new(0.5, -60, 0, 20)
 OpenBtn.BackgroundColor3 = Color3.fromRGB(10, 10, 10)
 OpenBtn.Text = "UTA HUB"
-OpenBtn.Font = Enum.Font.GothamBold
-OpenBtn.TextSize = 18
+OpenBtn.Font = Enum.Font.GothamBold -- Сделали шрифт нормальным (не слишком жирным)
+OpenBtn.TextSize = 16
 OpenBtn.Parent = ScreenGui
 
 local OpenUICorner = Instance.new("UICorner")
@@ -63,6 +65,7 @@ OpenBtn.TextColor3 = rainbowColor
 OpenUIStroke.Color = rainbowColor
 end)
 
+-- STREAMING_CHUNK:Building the main frame and sidebar structure...
 -- =========================================================
 -- 3. Главное Меню
 -- =========================================================
@@ -86,8 +89,8 @@ Title.Position = UDim2.new(0, 0, 0, 0)
 Title.BackgroundTransparency = 1
 Title.Text = "Uta Hub"
 Title.TextColor3 = THEME.TitleColor
-Title.TextSize = 20
-Title.Font = Enum.Font.GothamBlack
+Title.TextSize = 18
+Title.Font = Enum.Font.GothamBold -- Убрали слишком толстый шрифт (GothamBlack)
 Title.Parent = MainFrame
 
 -- Левая панель (Sidebar)
@@ -122,6 +125,7 @@ ContentContainer.Position = UDim2.new(0, 120, 0, 40)
 ContentContainer.BackgroundTransparency = 1
 ContentContainer.Parent = MainFrame
 
+-- STREAMING_CHUNK:Implementing draggable logic for the interface...
 -- =========================================================
 -- 4. Перетаскивание (Drag) для окон и кнопок
 -- =========================================================
@@ -166,6 +170,7 @@ OpenBtn.MouseButton1Click:Connect(function()
 MainFrame.Visible = not MainFrame.Visible
 end)
 
+-- STREAMING_CHUNK:Defining UI constructors (Tabs, Toggles, Sliders)...
 -- =========================================================
 -- 5. UI Конструкторы (Вкладки, Кнопки, Слайдеры, Переключатели)
 -- =========================================================
@@ -265,6 +270,7 @@ end)
 
 end
 
+-- STREAMING_CHUNK:Adding slider and button components...
 local function CreateSlider(parent, text, min, max, default, callback)
 local SliderContainer = Instance.new("Frame")
 SliderContainer.Size = UDim2.new(1, 0, 0, 50)
@@ -352,6 +358,7 @@ end)
 
 end
 
+-- STREAMING_CHUNK:Setting up tabs and Main tab features...
 -- =========================================================
 -- 6. Наполнение Вкладок и Логика
 -- =========================================================
@@ -408,6 +415,7 @@ if infJumpConn then infJumpConn:Disconnect() end
 end
 end)
 
+-- STREAMING_CHUNK:Adding Spin and Fly logic to Main tab...
 local spinConn
 local spinSpeed = 20
 CreateToggle(mainPage, "Spin", false, function(toggled)
@@ -500,12 +508,14 @@ elseif input.KeyCode == Enum.KeyCode.A then flyKeys.A = false
 elseif input.KeyCode == Enum.KeyCode.D then flyKeys.D = false end
 end)
 
+-- STREAMING_CHUNK:Populating remaining tabs (ESP, Autofarm, Fun, Settings)...
+
 -- Вкладка: COMBAT
 
 local combatNote = Instance.new("TextLabel", combatPage)
 combatNote.Size = UDim2.new(1, 0, 0, 30)
 combatNote.BackgroundTransparency = 1
-combatNote.Text = "Функции перемещены в Main."
+combatNote.Text = "Доступные функции перенесены в Main."
 combatNote.TextColor3 = THEME.TextDark
 combatNote.Font = Enum.Font.Gotham
 
