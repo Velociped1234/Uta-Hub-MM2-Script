@@ -1,5 +1,5 @@
 -- =========================================================
--- UTA HUB - Full Admin GUI Script
+-- UTA HUB - Full Script
 -- =========================================================
 
 local Players = game:GetService("Players")
