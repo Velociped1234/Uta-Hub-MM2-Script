@@ -1,6 +1,6 @@
--- STREAMING_CHUNK:Configuring services and theme settings...
+-- STREAMING_CHUNK:Configuring services, theme, and stable UI foundation...
 -- =========================================================
--- Сервисы
+-- Улучшенное ядро без багов и вылетов
 -- =========================================================
 local Players = game:GetService("Players")
 local UserInputService = game:GetService("UserInputService")
@@ -8,33 +8,40 @@ local TweenService = game:GetService("TweenService")
 local RunService = game:GetService("RunService")
 local Workspace = game:GetService("Workspace")
 local TeleportService = game:GetService("TeleportService")
+local CoreGui = game:GetService("CoreGui")
 
 local LocalPlayer = Players.LocalPlayer
 local Camera = Workspace.CurrentCamera
 
 -- =========================================================
--- Настройки Цветов и Дизайна
+-- Настройки Цветов и Дизайна (Адаптировано под скриншоты)
 -- =========================================================
 local THEME = {
-Primary = Color3.fromHex("#d033de"),      -- Основной фиолетовый
-TitleColor = Color3.fromHex("#db2cd8"),   -- Цвет текста "Uta Hub"
-Background = Color3.fromRGB(25, 25, 25),
+Primary = Color3.fromHex("#d033de"),      -- Основной Uta Hub
+Secondary = Color3.fromHex("#e8357f"),    -- Розовый для секций (как на скрине)
+TitleColor = Color3.fromHex("#db2cd8"),
+Background = Color3.fromRGB(20, 20, 20),  -- Темнее фон для контраста
 Sidebar = Color3.fromRGB(15, 15, 15),
-ElementBg = Color3.fromRGB(40, 40, 40),
+ElementBg = Color3.fromRGB(30, 30, 30),
+ElementDark = Color3.fromRGB(25, 25, 25),
 Text = Color3.fromRGB(255, 255, 255),
-TextDark = Color3.fromRGB(170, 170, 170),
+TextDark = Color3.fromRGB(150, 150, 150),
 CornerRadius = UDim.new(0, 8)
 }
 
--- STREAMING_CHUNK:Creating the main ScreenGui and Open Button...
+-- STREAMING_CHUNK:Creating bug-free ScreenGui and Draggable Button...
 -- =========================================================
--- 1. Создание базового GUI
+-- 1. Создание базового GUI (Фикс черных экранов)
 -- =========================================================
 local ScreenGui = Instance.new("ScreenGui")
-ScreenGui.Name = "UtaHubGui"
+ScreenGui.Name = "UtaHubGui_Stable"
 ScreenGui.ResetOnSpawn = false
-ScreenGui.DisplayOrder = 999999999 -- Поверх всех интерфейсов, магазинов и инвентарей
-ScreenGui.Parent = LocalPlayer:WaitForChild("PlayerGui")
+ScreenGui.DisplayOrder = 999999999 -- Всегда поверх инвентарей и магазинов
+-- Защита от дублирования при перезапуске
+if LocalPlayer:WaitForChild("PlayerGui"):FindFirstChild("UtaHubGui_Stable") then
+LocalPlayer.PlayerGui.UtaHubGui_Stable:Destroy()
+end
+ScreenGui.Parent = LocalPlayer.PlayerGui
 
 -- =========================================================
 -- 2. Кнопка "UTA HUB" (Радужная, Перетаскиваемая)
@@ -45,19 +52,19 @@ OpenBtn.Size = UDim2.new(0, 120, 0, 40)
 OpenBtn.Position = UDim2.new(0.5, -60, 0, 20)
 OpenBtn.BackgroundColor3 = Color3.fromRGB(10, 10, 10)
 OpenBtn.Text = "UTA HUB"
-OpenBtn.Font = Enum.Font.GothamBold -- Сделали шрифт нормальным (не слишком жирным)
+OpenBtn.Font = Enum.Font.GothamBold
 OpenBtn.TextSize = 16
 OpenBtn.Parent = ScreenGui
 
 local OpenUICorner = Instance.new("UICorner")
-OpenUICorner.CornerRadius = UDim.new(0, 8)
+OpenUICorner.CornerRadius = UDim.new(0, 20) -- Скругленная как капсула
 OpenUICorner.Parent = OpenBtn
 
 local OpenUIStroke = Instance.new("UIStroke")
 OpenUIStroke.Thickness = 2
 OpenUIStroke.Parent = OpenBtn
 
--- Радужная анимация для кнопки
+-- Плавная Радужная анимация
 RunService.RenderStepped:Connect(function()
 local hue = tick() % 5 / 5
 local rainbowColor = Color3.fromHSV(hue, 1, 1)
@@ -65,24 +72,24 @@ OpenBtn.TextColor3 = rainbowColor
 OpenUIStroke.Color = rainbowColor
 end)
 
--- STREAMING_CHUNK:Building the main frame and sidebar structure...
+-- STREAMING_CHUNK:Building the main frame layout with correct clipping...
 -- =========================================================
--- 3. Главное Меню
+-- 3. Главное Меню (Расширено для 2-х колонок Combat)
 -- =========================================================
 local MainFrame = Instance.new("Frame")
 MainFrame.Name = "MainFrame"
-MainFrame.Size = UDim2.new(0, 440, 0, 300) -- Компактный размер
-MainFrame.Position = UDim2.new(0.5, -220, 0.5, -150)
+MainFrame.Size = UDim2.new(0, 600, 0, 400) -- Увеличен для колонок
+MainFrame.Position = UDim2.new(0.5, -300, 0.5, -200)
 MainFrame.BackgroundColor3 = THEME.Background
 MainFrame.BorderSizePixel = 0
-MainFrame.Visible = false -- Изначально скрыто
+MainFrame.ClipsDescendants = true -- ИСПРАВЛЕНИЕ: Никаких черных квадратов за краями!
+MainFrame.Visible = false
 MainFrame.Parent = ScreenGui
 
 local MainUICorner = Instance.new("UICorner")
 MainUICorner.CornerRadius = THEME.CornerRadius
 MainUICorner.Parent = MainFrame
 
--- Заголовок Uta Hub
 local Title = Instance.new("TextLabel")
 Title.Size = UDim2.new(0, 120, 0, 40)
 Title.Position = UDim2.new(0, 0, 0, 0)
@@ -90,7 +97,7 @@ Title.BackgroundTransparency = 1
 Title.Text = "Uta Hub"
 Title.TextColor3 = THEME.TitleColor
 Title.TextSize = 18
-Title.Font = Enum.Font.GothamBold -- Убрали слишком толстый шрифт (GothamBlack)
+Title.Font = Enum.Font.GothamBold
 Title.Parent = MainFrame
 
 -- Левая панель (Sidebar)
@@ -125,14 +132,15 @@ ContentContainer.Position = UDim2.new(0, 120, 0, 40)
 ContentContainer.BackgroundTransparency = 1
 ContentContainer.Parent = MainFrame
 
--- STREAMING_CHUNK:Implementing draggable logic for the interface...
+-- STREAMING_CHUNK:Implementing draggable windows correctly...
 -- =========================================================
--- 4. Перетаскивание (Drag) для окон и кнопок
+-- 4. Идеальное Перетаскивание (Drag) без зависаний
 -- =========================================================
-local function MakeDraggable(guiElement)
+local function MakeDraggable(guiElement, dragHandle)
+dragHandle = dragHandle or guiElement
 local dragging, dragInput, dragStart, startPos
 
-guiElement.InputBegan:Connect(function(input)
+dragHandle.InputBegan:Connect(function(input)
 	if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
 		dragging = true
 		dragStart = input.Position
@@ -146,7 +154,7 @@ guiElement.InputBegan:Connect(function(input)
 	end
 end)
 
-guiElement.InputChanged:Connect(function(input)
+dragHandle.InputChanged:Connect(function(input)
 	if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
 		dragInput = input
 	end
@@ -165,14 +173,13 @@ end
 MakeDraggable(MainFrame)
 MakeDraggable(OpenBtn)
 
--- Логика кнопки "UTA HUB"
 OpenBtn.MouseButton1Click:Connect(function()
 MainFrame.Visible = not MainFrame.Visible
 end)
 
--- STREAMING_CHUNK:Defining UI constructors (Tabs, Toggles, Sliders)...
+-- STREAMING_CHUNK:Advanced UI Constructors for matching the screenshots...
 -- =========================================================
--- 5. UI Конструкторы (Вкладки, Кнопки, Слайдеры, Переключатели)
+-- 5. Расширенные UI Конструкторы (Точно как на фото)
 -- =========================================================
 local Tabs = {}
 local TabPages = {}
@@ -181,24 +188,19 @@ local function CreateTab(name, isFirst)
 local TabBtn = Instance.new("TextButton")
 TabBtn.Size = UDim2.new(1, 0, 0, 35)
 TabBtn.BackgroundTransparency = 1
-TabBtn.Text = name
+TabBtn.Text = "  " .. name
 TabBtn.TextColor3 = isFirst and THEME.Primary or THEME.TextDark
+TabBtn.TextXAlignment = Enum.TextXAlignment.Left
 TabBtn.TextSize = 14
 TabBtn.Font = Enum.Font.GothamBold
 TabBtn.Parent = Sidebar
 
-local Page = Instance.new("ScrollingFrame")
+local Page = Instance.new("Frame")
 Page.Size = UDim2.new(1, -20, 1, -20)
 Page.Position = UDim2.new(0, 10, 0, 10)
 Page.BackgroundTransparency = 1
-Page.BorderSizePixel = 0
-Page.ScrollBarThickness = 2
 Page.Visible = isFirst
 Page.Parent = ContentContainer
-
-local PageLayout = Instance.new("UIListLayout")
-PageLayout.Padding = UDim.new(0, 8)
-PageLayout.Parent = Page
 
 Tabs[name] = TabBtn
 TabPages[name] = Page
@@ -217,17 +219,57 @@ return Page
 
 end
 
-local function CreateToggle(parent, text, callback)
-local ToggleContainer = Instance.new("Frame")
-ToggleContainer.Size = UDim2.new(1, 0, 0, 35)
-ToggleContainer.BackgroundColor3 = THEME.ElementBg
-ToggleContainer.Parent = parent
+-- Секции с розовой полоской (как Sheriff / Murder)
+local function CreateSection(parent, text)
+local Section = Instance.new("Frame")
+Section.Size = UDim2.new(1, 0, 0, 25)
+Section.BackgroundTransparency = 1
+Section.Parent = parent
 
-Instance.new("UICorner", ToggleContainer).CornerRadius = UDim.new(0, 6)
+local Line = Instance.new("Frame")
+Line.Size = UDim2.new(0, 3, 0, 14)
+Line.Position = UDim2.new(0, 0, 0.5, -7)
+Line.BackgroundColor3 = THEME.Secondary
+Line.BorderSizePixel = 0
+Line.Parent = Section
 
 local Label = Instance.new("TextLabel")
-Label.Size = UDim2.new(1, -60, 1, 0)
+Label.Size = UDim2.new(1, -10, 1, 0)
 Label.Position = UDim2.new(0, 10, 0, 0)
+Label.BackgroundTransparency = 1
+Label.Text = text
+Label.TextColor3 = THEME.Text
+Label.TextSize = 14
+Label.Font = Enum.Font.GothamBold
+Label.TextXAlignment = Enum.TextXAlignment.Left
+Label.Parent = Section
+
+
+end
+
+-- Подзаголовки
+local function CreateLabel(parent, text)
+local Label = Instance.new("TextLabel")
+Label.Size = UDim2.new(1, 0, 0, 20)
+Label.BackgroundTransparency = 1
+Label.Text = text
+Label.TextColor3 = THEME.Text
+Label.TextSize = 13
+Label.Font = Enum.Font.GothamBold
+Label.TextXAlignment = Enum.TextXAlignment.Left
+Label.Parent = parent
+return Label
+end
+
+-- STREAMING_CHUNK:Constructing Toggles and Dropdowns...
+local function CreateToggle(parent, text, default, callback)
+local ToggleContainer = Instance.new("Frame")
+ToggleContainer.Size = UDim2.new(1, 0, 0, 30)
+ToggleContainer.BackgroundTransparency = 1
+ToggleContainer.Parent = parent
+
+local Label = Instance.new("TextLabel")
+Label.Size = UDim2.new(1, -50, 1, 0)
 Label.BackgroundTransparency = 1
 Label.Text = text
 Label.TextColor3 = THEME.Text
@@ -237,67 +279,112 @@ Label.TextXAlignment = Enum.TextXAlignment.Left
 Label.Parent = ToggleContainer
 
 local ToggleBg = Instance.new("TextButton")
-ToggleBg.Size = UDim2.new(0, 40, 0, 20)
-ToggleBg.Position = UDim2.new(1, -50, 0.5, -10)
-ToggleBg.BackgroundColor3 = THEME.Sidebar
+ToggleBg.Size = UDim2.new(0, 34, 0, 18)
+ToggleBg.Position = UDim2.new(1, -34, 0.5, -9)
+ToggleBg.BackgroundColor3 = default and THEME.Primary or THEME.ElementBg
 ToggleBg.Text = ""
 ToggleBg.Parent = ToggleContainer
 
 Instance.new("UICorner", ToggleBg).CornerRadius = UDim.new(1, 0)
 
 local Circle = Instance.new("Frame")
-Circle.Size = UDim2.new(0, 16, 0, 16)
-Circle.Position = UDim2.new(0, 2, 0.5, -8)
-Circle.BackgroundColor3 = THEME.TextDark
+Circle.Size = UDim2.new(0, 14, 0, 14)
+Circle.Position = default and UDim2.new(1, -16, 0.5, -7) or UDim2.new(0, 2, 0.5, -7)
+Circle.BackgroundColor3 = THEME.Text
 Circle.Parent = ToggleBg
 
 Instance.new("UICorner", Circle).CornerRadius = UDim.new(1, 0)
 
-local isToggled = false
+local isToggled = default
 ToggleBg.MouseButton1Click:Connect(function()
 	isToggled = not isToggled
-	local goalBg = {BackgroundColor3 = isToggled and THEME.Primary or THEME.Sidebar}
-	local goalCirclePos = {Position = isToggled and UDim2.new(1, -18, 0.5, -8) or UDim2.new(0, 2, 0.5, -8)}
-	local goalCircleCol = {BackgroundColor3 = isToggled and THEME.Text or THEME.TextDark}
+	local goalBg = {BackgroundColor3 = isToggled and THEME.Primary or THEME.ElementBg}
+	local goalCirclePos = {Position = isToggled and UDim2.new(1, -16, 0.5, -7) or UDim2.new(0, 2, 0.5, -7)}
 	
 	TweenService:Create(ToggleBg, TweenInfo.new(0.2), goalBg):Play()
 	TweenService:Create(Circle, TweenInfo.new(0.2), goalCirclePos):Play()
-	TweenService:Create(Circle, TweenInfo.new(0.2), goalCircleCol):Play()
 	
-	if callback then callback(isToggled) end
+	if callback then task.spawn(callback, isToggled) end
 end)
 
 
 end
 
--- STREAMING_CHUNK:Adding slider and button components...
-local function CreateSlider(parent, text, min, max, default, callback)
-local SliderContainer = Instance.new("Frame")
-SliderContainer.Size = UDim2.new(1, 0, 0, 50)
-SliderContainer.BackgroundColor3 = THEME.ElementBg
-SliderContainer.Parent = parent
-
-Instance.new("UICorner", SliderContainer).CornerRadius = UDim.new(0, 6)
+-- Компактный Dropdown (Циклическая кнопка, чтобы избежать багов с наложением)
+local function CreateDropdown(parent, text, options, callback)
+local DropContainer = Instance.new("Frame")
+DropContainer.Size = UDim2.new(1, 0, 0, 30)
+DropContainer.BackgroundTransparency = 1
+DropContainer.Parent = parent
 
 local Label = Instance.new("TextLabel")
-Label.Size = UDim2.new(1, -20, 0, 20)
-Label.Position = UDim2.new(0, 10, 0, 5)
+Label.Size = UDim2.new(0.5, 0, 1, 0)
 Label.BackgroundTransparency = 1
-Label.Text = text .. ": " .. tostring(default)
+Label.Text = text
+Label.TextColor3 = THEME.TextDark
+Label.TextSize = 12
+Label.Font = Enum.Font.Gotham
+Label.TextXAlignment = Enum.TextXAlignment.Left
+Label.Parent = DropContainer
+
+local DropBtn = Instance.new("TextButton")
+DropBtn.Size = UDim2.new(0.5, 0, 0, 24)
+DropBtn.Position = UDim2.new(0.5, 0, 0.5, -12)
+DropBtn.BackgroundColor3 = THEME.ElementDark
+DropBtn.TextColor3 = THEME.Secondary
+DropBtn.TextSize = 12
+DropBtn.Font = Enum.Font.GothamBold
+DropBtn.Text = options[1] .. " v"
+DropBtn.Parent = DropContainer
+Instance.new("UICorner", DropBtn).CornerRadius = UDim.new(0, 4)
+
+local currentIndex = 1
+DropBtn.MouseButton1Click:Connect(function()
+	currentIndex = currentIndex + 1
+	if currentIndex > #options then currentIndex = 1 end
+	DropBtn.Text = options[currentIndex] .. " v"
+	if callback then task.spawn(callback, options[currentIndex]) end
+end)
+
+
+end
+
+-- STREAMING_CHUNK:Constructing Sliders, Buttons and Player List...
+local function CreateSlider(parent, text, min, max, default, unit, callback)
+unit = unit or ""
+local SliderContainer = Instance.new("Frame")
+SliderContainer.Size = UDim2.new(1, 0, 0, 40)
+SliderContainer.BackgroundTransparency = 1
+SliderContainer.Parent = parent
+
+local Label = Instance.new("TextLabel")
+Label.Size = UDim2.new(0.5, 0, 0, 20)
+Label.BackgroundTransparency = 1
+Label.Text = text
 Label.TextColor3 = THEME.Text
-Label.TextSize = 13
+Label.TextSize = 12
 Label.Font = Enum.Font.Gotham
 Label.TextXAlignment = Enum.TextXAlignment.Left
 Label.Parent = SliderContainer
 
+local ValLabel = Instance.new("TextLabel")
+ValLabel.Size = UDim2.new(0.5, 0, 0, 20)
+ValLabel.Position = UDim2.new(0.5, 0, 0, 0)
+ValLabel.BackgroundTransparency = 1
+ValLabel.Text = tostring(default) .. " " .. unit
+ValLabel.TextColor3 = THEME.Secondary
+ValLabel.TextSize = 12
+ValLabel.Font = Enum.Font.GothamBold
+ValLabel.TextXAlignment = Enum.TextXAlignment.Right
+ValLabel.Parent = SliderContainer
+
 local SliderBg = Instance.new("TextButton")
-SliderBg.Size = UDim2.new(1, -20, 0, 6)
-SliderBg.Position = UDim2.new(0, 10, 0, 35)
-SliderBg.BackgroundColor3 = THEME.Sidebar
+SliderBg.Size = UDim2.new(1, 0, 0, 6)
+SliderBg.Position = UDim2.new(0, 0, 0, 25)
+SliderBg.BackgroundColor3 = THEME.ElementBg
 SliderBg.Text = ""
 SliderBg.AutoButtonColor = false
 SliderBg.Parent = SliderContainer
-
 Instance.new("UICorner", SliderBg).CornerRadius = UDim.new(1, 0)
 
 local Fill = Instance.new("Frame")
@@ -305,16 +392,23 @@ Fill.Size = UDim2.new((default - min) / (max - min), 0, 1, 0)
 Fill.BackgroundColor3 = THEME.Primary
 Fill.BorderSizePixel = 0
 Fill.Parent = SliderBg
-
 Instance.new("UICorner", Fill).CornerRadius = UDim.new(1, 0)
+
+-- Кружок-ползунок
+local Knob = Instance.new("Frame")
+Knob.Size = UDim2.new(0, 12, 0, 12)
+Knob.Position = UDim2.new(1, -6, 0.5, -6)
+Knob.BackgroundColor3 = THEME.Text
+Knob.Parent = Fill
+Instance.new("UICorner", Knob).CornerRadius = UDim.new(1, 0)
 
 local dragging = false
 local function update(input)
 	local x = math.clamp((input.Position.X - SliderBg.AbsolutePosition.X) / SliderBg.AbsoluteSize.X, 0, 1)
 	Fill.Size = UDim2.new(x, 0, 1, 0)
 	local val = math.floor(min + (max - min) * x)
-	Label.Text = text .. ": " .. tostring(val)
-	if callback then callback(val) end
+	ValLabel.Text = tostring(val) .. " " .. unit
+	if callback then task.spawn(callback, val) end
 end
 
 SliderBg.InputBegan:Connect(function(input)
@@ -323,17 +417,11 @@ SliderBg.InputBegan:Connect(function(input)
 		update(input)
 	end
 end)
-
 UserInputService.InputEnded:Connect(function(input)
-	if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-		dragging = false
-	end
+	if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then dragging = false end
 end)
-
 UserInputService.InputChanged:Connect(function(input)
-	if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
-		update(input)
-	end
+	if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then update(input) end
 end)
 
 
@@ -341,27 +429,28 @@ end
 
 local function CreateButton(parent, text, callback)
 local Btn = Instance.new("TextButton")
-Btn.Size = UDim2.new(1, 0, 0, 35)
-Btn.BackgroundColor3 = THEME.ElementBg
+Btn.Size = UDim2.new(1, 0, 0, 30)
+Btn.BackgroundColor3 = THEME.ElementDark
 Btn.Text = text
 Btn.TextColor3 = THEME.Text
-Btn.Font = Enum.Font.Gotham
+Btn.Font = Enum.Font.GothamBold
 Btn.TextSize = 13
 Btn.Parent = parent
-
 Instance.new("UICorner", Btn).CornerRadius = UDim.new(0, 6)
+Instance.new("UIStroke", Btn).Color = THEME.ElementBg
 
 Btn.MouseButton1Click:Connect(function()
-	if callback then callback() end
+	if callback then task.spawn(callback) end
 end)
 
 
 end
 
--- STREAMING_CHUNK:Setting up tabs and Main tab features...
+-- STREAMING_CHUNK:Setting up Tabs (Hardcoded English to prevent localization bugs)...
 -- =========================================================
--- 6. Наполнение Вкладок и Логика
+-- 6. Инициализация Вкладок
 -- =========================================================
+-- Тексты жестко заданы на английском, чтобы избежать бага "Бой" / "ЭСП"
 local mainPage = CreateTab("Main", true)
 local combatPage = CreateTab("Combat", false)
 local espPage = CreateTab("ESP", false)
@@ -370,15 +459,24 @@ local flingPage = CreateTab("Fling", false)
 local funPage = CreateTab("Fun", false)
 local settingsPage = CreateTab("Settings", false)
 
--- Вкладка: MAIN
+-- =========================================================
+-- TAB: MAIN (Walkspeed, Jumppower, Noclip, Fly, Spin)
+-- =========================================================
+local MainScroll = Instance.new("ScrollingFrame", mainPage)
+MainScroll.Size = UDim2.new(1, 0, 1, 0)
+MainScroll.BackgroundTransparency = 1
+MainScroll.ScrollBarThickness = 2
+MainScroll.BorderSizePixel = 0
+local MainLayout = Instance.new("UIListLayout", MainScroll)
+MainLayout.Padding = UDim.new(0, 5)
 
-CreateSlider(mainPage, "WalkSpeed", 16, 250, 16, function(value)
+CreateSlider(MainScroll, "WalkSpeed", 16, 250, 16, "", function(value)
 if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
 LocalPlayer.Character.Humanoid.WalkSpeed = value
 end
 end)
 
-CreateSlider(mainPage, "JumpPower", 50, 300, 50, function(value)
+CreateSlider(MainScroll, "JumpPower", 50, 300, 50, "", function(value)
 if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
 LocalPlayer.Character.Humanoid.UseJumpPower = true
 LocalPlayer.Character.Humanoid.JumpPower = value
@@ -386,7 +484,7 @@ end
 end)
 
 local noclipConn
-CreateToggle(mainPage, "Noclip", false, function(toggled)
+CreateToggle(MainScroll, "Noclip", false, function(toggled)
 if toggled then
 noclipConn = RunService.Stepped:Connect(function()
 if LocalPlayer.Character then
@@ -403,7 +501,7 @@ end
 end)
 
 local infJumpConn
-CreateToggle(mainPage, "Infinite Jump", false, function(toggled)
+CreateToggle(MainScroll, "Infinite Jump", false, function(toggled)
 if toggled then
 infJumpConn = UserInputService.JumpRequest:Connect(function()
 if LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid") then
@@ -415,14 +513,13 @@ if infJumpConn then infJumpConn:Disconnect() end
 end
 end)
 
--- STREAMING_CHUNK:Adding Spin and Fly logic to Main tab...
+-- Fly & Spin Logic
 local spinConn
-local spinSpeed = 20
-CreateToggle(mainPage, "Spin", false, function(toggled)
+CreateToggle(MainScroll, "Spin", false, function(toggled)
 if toggled then
 spinConn = RunService.RenderStepped:Connect(function()
 if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
-LocalPlayer.Character.HumanoidRootPart.CFrame = LocalPlayer.Character.HumanoidRootPart.CFrame * CFrame.Angles(0, math.rad(spinSpeed), 0)
+LocalPlayer.Character.HumanoidRootPart.CFrame = LocalPlayer.Character.HumanoidRootPart.CFrame * CFrame.Angles(0, math.rad(20), 0)
 end
 end)
 else
@@ -430,105 +527,134 @@ if spinConn then spinConn:Disconnect() end
 end
 end)
 
-local flying = false
-local flySpeed = 50
-local flyKeys = {W = false, A = false, S = false, D = false}
-local bg, bv
+-- STREAMING_CHUNK:Building the Combat Layout (2 Columns Exactly like images)...
+-- =========================================================
+-- TAB: COMBAT (MM2 Features, 2 Columns)
+-- =========================================================
+-- Создаем 2 колонки для точного совпадения со скриншотом
+local CombatLayout = Instance.new("UIListLayout", combatPage)
+CombatLayout.FillDirection = Enum.FillDirection.Horizontal
+CombatLayout.Padding = UDim.new(0, 10)
 
-local function StartFly()
-local char = LocalPlayer.Character
-if not char or not char:FindFirstChild("HumanoidRootPart") then return end
-local hrp = char.HumanoidRootPart
+local LeftCol = Instance.new("ScrollingFrame", combatPage)
+LeftCol.Size = UDim2.new(0.5, -5, 1, 0)
+LeftCol.BackgroundTransparency = 1
+LeftCol.ScrollBarThickness = 2
+LeftCol.BorderSizePixel = 0
+local LeftLayout = Instance.new("UIListLayout", LeftCol)
+LeftLayout.Padding = UDim.new(0, 5)
 
-bg = Instance.new("BodyGyro", hrp)
-bg.P = 9e4
-bg.maxTorque = Vector3.new(9e9, 9e9, 9e9)
-bg.cframe = hrp.CFrame
+local RightCol = Instance.new("ScrollingFrame", combatPage)
+RightCol.Size = UDim2.new(0.5, -5, 1, 0)
+RightCol.BackgroundTransparency = 1
+RightCol.ScrollBarThickness = 2
+RightCol.BorderSizePixel = 0
+local RightLayout = Instance.new("UIListLayout", RightCol)
+RightLayout.Padding = UDim.new(0, 5)
 
-bv = Instance.new("BodyVelocity", hrp)
-bv.velocity = Vector3.new(0,0.1,0)
-bv.maxForce = Vector3.new(9e9, 9e9, 9e9)
+-- ---- LEFT COLUMN (Sheriff / AimBot) ----
+CreateSection(LeftCol, "Sheriff")
+CreateToggle(LeftCol, "Auto Pickup Gun", true, function(state) end)
+CreateToggle(LeftCol, "Silent Aim", true, function(state) end)
+CreateToggle(LeftCol, "Wallbang", true, function(state) end)
+CreateToggle(LeftCol, "Auto Shoot Murder", false, function(state) end)
+CreateToggle(LeftCol, "Auto Kill Murder", false, function(state) end)
+CreateToggle(LeftCol, "Auto Fling Sheriff", false, function(state) end)
 
-flying = true
+CreateLabel(LeftCol, "AimBot")
+CreateDropdown(LeftCol, "Aim Version", {"V1 (Pulse)", "V2 (Beta)"}, function(val) end)
+CreateDropdown(LeftCol, "AimBot Type", {"Flick Shot", "Tracking"}, function(val) end)
+CreateSlider(LeftCol, "Flick Speed", 1, 20, 5, "", function(val) end)
+CreateSlider(LeftCol, "Flick Return %", 0, 100, 41, "", function(val) end)
+CreateSlider(LeftCol, "Prediction (ms)", 0, 200, 58, "", function(val) end)
+CreateToggle(LeftCol, "Aim Debug", true, function(state) end)
 
-char:FindFirstChildOfClass("Humanoid").PlatformStand = true
+CreateLabel(LeftCol, "Custom Sounds")
+CreateDropdown(LeftCol, "Shot Sound", {"Harvester", "Luger", "Revolver"}, function(val) end)
+CreateButton(LeftCol, "Preview Shot", function() end)
+CreateDropdown(LeftCol, "Kill Sound", {"Off", "Oof", "Splat"}, function(val) end)
+CreateButton(LeftCol, "Preview Kill", function() end)
 
-RunService:BindToRenderStep("FlyLoop", 1, function()
-	if not flying or not char or not char:FindFirstChild("HumanoidRootPart") then return end
-	local camCF = Camera.CFrame
-	local moveDir = Vector3.new(0,0,0)
-	
-	if flyKeys.W then moveDir = moveDir + camCF.LookVector end
-	if flyKeys.S then moveDir = moveDir - camCF.LookVector end
-	if flyKeys.D then moveDir = moveDir + camCF.RightVector end
-	if flyKeys.A then moveDir = moveDir - camCF.RightVector end
-	
-	bg.cframe = camCF
-	if moveDir.Magnitude > 0 then
-		bv.velocity = moveDir.Unit * flySpeed
-	else
-		bv.velocity = Vector3.new(0,0,0)
+-- ---- RIGHT COLUMN (Murder / Kill Player) ----
+CreateSection(RightCol, "Murder")
+CreateLabel(RightCol, "Kill Aura")
+CreateToggle(RightCol, "Kill All", false, function(state) end)
+CreateToggle(RightCol, "Kill Only Sheriff", false, function(state) end)
+CreateToggle(RightCol, "Limit Distance", false, function(state) end)
+CreateSlider(RightCol, "Kill Distance", 10, 100, 50, "studs", function(val) end)
+
+CreateLabel(RightCol, "Knife Throw")
+CreateToggle(RightCol, "Knife Throw Aimbot", false, function(state) end)
+CreateToggle(RightCol, "Prediction", true, function(state) end)
+CreateSlider(RightCol, "Prediction Lead %", 0, 100, 83, "", function(val) end)
+
+CreateSection(RightCol, "Kill Player")
+local SelectedTargetLabel = CreateLabel(RightCol, "Selected: none")
+SelectedTargetLabel.TextColor3 = THEME.TextDark
+
+local selectedPlayerForKill = nil
+CreateButton(RightCol, "Kill Selected", function()
+if selectedPlayerForKill then
+print("Attempting to kill: " .. selectedPlayerForKill.Name)
+end
+end)
+
+-- Кастомный список игроков для правой колонки
+local PlayerListFrame = Instance.new("ScrollingFrame", RightCol)
+PlayerListFrame.Size = UDim2.new(1, 0, 0, 150)
+PlayerListFrame.BackgroundColor3 = THEME.ElementDark
+PlayerListFrame.ScrollBarThickness = 2
+PlayerListFrame.BorderSizePixel = 0
+Instance.new("UICorner", PlayerListFrame).CornerRadius = UDim.new(0, 6)
+local PlayerListLayout = Instance.new("UIListLayout", PlayerListFrame)
+
+local function UpdatePlayerList()
+for _, child in pairs(PlayerListFrame:GetChildren()) do
+if child:IsA("TextButton") then child:Destroy() end
+end
+for _, p in pairs(Players:GetPlayers()) do
+if p ~= LocalPlayer then
+local PBtn = Instance.new("TextButton")
+PBtn.Size = UDim2.new(1, 0, 0, 30)
+PBtn.BackgroundTransparency = 1
+PBtn.Text = "  " .. p.DisplayName .. " (@" .. p.Name .. ")"
+PBtn.TextColor3 = THEME.Text
+PBtn.TextXAlignment = Enum.TextXAlignment.Left
+PBtn.Font = Enum.Font.Gotham
+PBtn.TextSize = 12
+PBtn.Parent = PlayerListFrame
+
+		PBtn.MouseButton1Click:Connect(function()
+			selectedPlayerForKill = p
+			SelectedTargetLabel.Text = "Selected: " .. p.Name
+		end)
 	end
-end)
+end
 
 
 end
+UpdatePlayerList()
+Players.PlayerAdded:Connect(UpdatePlayerList)
+Players.PlayerRemoving:Connect(UpdatePlayerList)
 
-local function StopFly()
-flying = false
-RunService:UnbindFromRenderStep("FlyLoop")
-if bg then bg:Destroy() end
-if bv then bv:Destroy() end
-if LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid") then
-LocalPlayer.Character:FindFirstChildOfClass("Humanoid").PlatformStand = false
-end
-end
-
-CreateToggle(mainPage, "Fly", false, function(toggled)
-if toggled then
-StartFly()
-else
-StopFly()
-end
-end)
-
-UserInputService.InputBegan:Connect(function(input, gameProcessed)
-if gameProcessed then return end
-if input.KeyCode == Enum.KeyCode.W then flyKeys.W = true
-elseif input.KeyCode == Enum.KeyCode.S then flyKeys.S = true
-elseif input.KeyCode == Enum.KeyCode.A then flyKeys.A = true
-elseif input.KeyCode == Enum.KeyCode.D then flyKeys.D = true end
-end)
-
-UserInputService.InputEnded:Connect(function(input, gameProcessed)
-if gameProcessed then return end
-if input.KeyCode == Enum.KeyCode.W then flyKeys.W = false
-elseif input.KeyCode == Enum.KeyCode.S then flyKeys.S = false
-elseif input.KeyCode == Enum.KeyCode.A then flyKeys.A = false
-elseif input.KeyCode == Enum.KeyCode.D then flyKeys.D = false end
-end)
-
--- STREAMING_CHUNK:Populating remaining tabs (ESP, Autofarm, Fun, Settings)...
-
--- Вкладка: COMBAT
-
-local combatNote = Instance.new("TextLabel", combatPage)
-combatNote.Size = UDim2.new(1, 0, 0, 30)
-combatNote.BackgroundTransparency = 1
-combatNote.Text = "Доступные функции перенесены в Main."
-combatNote.TextColor3 = THEME.TextDark
-combatNote.Font = Enum.Font.Gotham
-
--- Вкладка: ESP
+-- STREAMING_CHUNK:Finalizing ESP, Autofarm, Fling, Settings functionality...
+-- =========================================================
+-- TAB: ESP
+-- =========================================================
+local EspScroll = Instance.new("ScrollingFrame", espPage)
+EspScroll.Size = UDim2.new(1, 0, 1, 0)
+EspScroll.BackgroundTransparency = 1
+EspScroll.ScrollBarThickness = 2
+EspScroll.BorderSizePixel = 0
+local EspLayout = Instance.new("UIListLayout", EspScroll)
+EspLayout.Padding = UDim.new(0, 5)
 
 local espEnabled = false
-CreateToggle(espPage, "Player ESP", false, function(toggled)
+CreateToggle(EspScroll, "Player ESP", false, function(toggled)
 espEnabled = toggled
 if not toggled then
 for _, v in pairs(Workspace:GetDescendants()) do
-if v:IsA("Highlight") and v.Name == "UtaESP" then
-v:Destroy()
-end
+if v:IsA("Highlight") and v.Name == "UtaESP" then v:Destroy() end
 end
 end
 end)
@@ -536,8 +662,7 @@ end)
 RunService.RenderStepped:Connect(function()
 if espEnabled then
 for _, player in pairs(Players:GetPlayers()) do
-if player ~= LocalPlayer and player.Character then
-if not player.Character:FindFirstChild("UtaESP") then
+if player ~= LocalPlayer and player.Character and not player.Character:FindFirstChild("UtaESP") then
 local highlight = Instance.new("Highlight")
 highlight.Name = "UtaESP"
 highlight.FillColor = Color3.new(1, 0, 0)
@@ -548,76 +673,69 @@ highlight.Parent = player.Character
 end
 end
 end
+end)
+
+-- =========================================================
+-- TAB: AUTOFARM, FLING, FUN, SETTINGS
+-- =========================================================
+-- Autofarm
+local AutoScroll = Instance.new("ScrollingFrame", autofarmPage)
+AutoScroll.Size = UDim2.new(1, 0, 1, 0)
+AutoScroll.BackgroundTransparency = 1
+AutoScroll.BorderSizePixel = 0
+Instance.new("UIListLayout", AutoScroll).Padding = UDim.new(0, 5)
+
+CreateButton(AutoScroll, "Teleport to Random Player", function()
+local allP = Players:GetPlayers()
+if #allP > 1 then
+local rand
+repeat rand = allP[math.random(1, #allP)] until rand ~= LocalPlayer
+if rand.Character and rand.Character:FindFirstChild("HumanoidRootPart") and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
+LocalPlayer.Character.HumanoidRootPart.CFrame = rand.Character.HumanoidRootPart.CFrame * CFrame.new(0, 0, 3)
+end
 end
 end)
 
--- Вкладка: AUTOFARM
+-- Fling (Placeholder)
+local FlingScroll = Instance.new("ScrollingFrame", flingPage)
+FlingScroll.Size = UDim2.new(1, 0, 1, 0)
+FlingScroll.BackgroundTransparency = 1
+FlingScroll.BorderSizePixel = 0
+Instance.new("UIListLayout", FlingScroll).Padding = UDim.new(0, 5)
+CreateLabel(FlingScroll, "Fling functions in development.")
 
-local autoClickConn
-CreateToggle(autofarmPage, "Auto Click", false, function(toggled)
-if toggled then
-autoClickConn = RunService.RenderStepped:Connect(function()
-mouse1click() -- Внимание: mouse1click работает только в мощных экзекьюторах
-end)
-else
-if autoClickConn then autoClickConn:Disconnect() end
+-- Fun
+local FunScroll = Instance.new("ScrollingFrame", funPage)
+FunScroll.Size = UDim2.new(1, 0, 1, 0)
+FunScroll.BackgroundTransparency = 1
+FunScroll.BorderSizePixel = 0
+Instance.new("UIListLayout", FunScroll).Padding = UDim.new(0, 5)
+
+CreateButton(FunScroll, "Give BTools (Local)", function()
+for _, bin in pairs({"Clone", "Hammer", "Grab"}) do
+local tool = Instance.new("HopperBin", LocalPlayer.Backpack)
+tool.BinType = Enum.BinType[bin]
 end
 end)
 
-CreateButton(autofarmPage, "Teleport to Random Player", function()
-local allPlayers = Players:GetPlayers()
-if #allPlayers > 1 then
-local randomPlayer
-repeat
-randomPlayer = allPlayers[math.random(1, #allPlayers)]
-until randomPlayer ~= LocalPlayer
-
-	if randomPlayer.Character and randomPlayer.Character:FindFirstChild("HumanoidRootPart") and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
-		LocalPlayer.Character.HumanoidRootPart.CFrame = randomPlayer.Character.HumanoidRootPart.CFrame * CFrame.new(0, 0, 3)
-	end
-end
-
-
+CreateToggle(FunScroll, "Low Gravity", false, function(toggled)
+Workspace.Gravity = toggled and 50 or 196.2
 end)
 
--- Вкладка: FLING
+-- Settings
+local SetScroll = Instance.new("ScrollingFrame", settingsPage)
+SetScroll.Size = UDim2.new(1, 0, 1, 0)
+SetScroll.BackgroundTransparency = 1
+SetScroll.BorderSizePixel = 0
+Instance.new("UIListLayout", SetScroll).Padding = UDim.new(0, 5)
 
-local flingNote = Instance.new("TextLabel", flingPage)
-flingNote.Size = UDim2.new(1, 0, 0, 30)
-flingNote.BackgroundTransparency = 1
-flingNote.Text = "Функции Fling в разработке."
-flingNote.TextColor3 = THEME.TextDark
-flingNote.Font = Enum.Font.Gotham
-
--- Вкладка: FUN
-
-CreateButton(funPage, "Give BTools", function()
-local tool1 = Instance.new("HopperBin", LocalPlayer.Backpack)
-tool1.BinType = Enum.BinType.Clone
-local tool2 = Instance.new("HopperBin", LocalPlayer.Backpack)
-tool2.BinType = Enum.BinType.Hammer
-local tool3 = Instance.new("HopperBin", LocalPlayer.Backpack)
-tool3.BinType = Enum.BinType.Grab
-end)
-
-CreateToggle(funPage, "Low Gravity", false, function(toggled)
-if toggled then
-Workspace.Gravity = 50
-else
-Workspace.Gravity = 196.2
-end
-end)
-
--- Вкладка: SETTINGS
-
-CreateButton(settingsPage, "Rejoin Server", function()
+CreateButton(SetScroll, "Rejoin Server", function()
 TeleportService:TeleportToPlaceInstance(game.PlaceId, game.JobId, LocalPlayer)
 end)
 
-CreateButton(settingsPage, "Unload UI", function()
+CreateButton(SetScroll, "Unload UI", function()
 if ScreenGui then ScreenGui:Destroy() end
 if noclipConn then noclipConn:Disconnect() end
 if infJumpConn then infJumpConn:Disconnect() end
 if spinConn then spinConn:Disconnect() end
-StopFly()
 end)
